@@ -3,6 +3,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import RandomOverSampler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+#preparing data
 
 cols = ["fLength", "fWidth", "fSize", "fConc", "fConc1", "fAsym", "fM3Long", "fM3Trans", "fAlpha", "fDist", "class"]
 df = pd.read_csv("magic04.data", names=cols)
@@ -39,3 +45,34 @@ print(len(train[train["class"]==0])) #gamma
 train, x_train, y_train = scale_dataset(train, oversample=True)
 valid, x_valid, y_valid = scale_dataset(valid, oversample=False)
 test, x_test, y_test = scale_dataset(test, oversample=False)
+
+#k Neareast Neighbors
+def knearestneighbors():
+    knn_model = KNeighborsClassifier(n_neighbors=3)
+    knn_model.fit(x_train, y_train)
+
+    y_pred = knn_model.predict(x_test)
+    print(classification_report(y_test, y_pred))
+
+#Naibe Bayes
+def naibebayes():
+    nb_model = GaussianNB()
+    nb_model.fit(x_train, y_train)
+
+    y_pred = nb_model.predict(x_test)
+    print(classification_report(y_test, y_pred))
+
+#logistic regression
+def logreg():
+    lg_model = LogisticRegression()
+    lg_model = lg_model.fit(x_train,y_train)
+
+    y_pred = lg_model.predict(x_test)
+    print(classification_report(y_test, y_pred))
+
+def svm_function():
+    svm_model = SVC()
+    svm_model = svm_model.fit(x_train, y_train)
+
+    y_pred = svm_model.predict(x_test)
+    print(classification_report(y_test, y_pred))
