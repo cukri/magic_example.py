@@ -80,38 +80,52 @@ def svm_function():
     print(classification_report(y_test, y_pred))
 
 #Neural networks
-def plot_loss(history):
-    plt.plot(history.history['loss'], label='loss')
-    plt.plot(history.history['val_loss'], label='val_loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Binary crossentropy')
-    plt.legend()
-    plt.grid(True)
+def plot_history(history):
+    fig, (ax1, ax2) = plt.subplots(1 , 2, figsize=(10, 4))
+    ax1.plot(history.history['loss'], label='loss')
+    ax1.plot(history.history['val_loss'], label='val_loss')
+    ax1.set_xlabel('Epoch')
+    ax1.set_ylabel('Binary crossentropy')
+    ax1.grid(True)
+
+    ax2.plot(history.history['accuracy'], label='accuracy')
+    ax2.plot(history.history['val_accuracy'], label='val_accuracy')
+    ax2.set_xlabel('Epoch')
+    ax2.set_ylabel('Accuracy')
+    ax2.grid(True)
+
+
     plt.show()
 
-def plot_accuracy(history):
-    plt.plot(history.history['accuracy'], label='accuracy')
-    plt.plot(history.history['val_accuracy'], label='val_accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-def new_nn():
+def train_model(x_train, y_train, num_nodes, dropout_prob, learning_rate, batch_size, epochs):
     nn_model = tf.keras.Sequential([
-        tf.keras.layers.Dense(32, activation= 'relu', input_shape=(10,)),
-        tf.keras.layers.Dense(32, activation= 'relu'),
+        tf.keras.layers.Dense(num_nodes, activation= 'relu', input_shape=(10,)),
+        tf.keras.layers.Dropout(dropout_prob),
+        tf.keras.layers.Dense(num_nodes, activation= 'relu'),
+        tf.keras.layers.Dropout(dropout_prob),
         tf.keras.layers.Dense(1, activation='sigmoid')
     ])
 
-    nn_model.compile(optimizer=tf.keras.optimizers.Adam(0.001), loss= 'binary_crossentropy',
+    nn_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate), loss= 'binary_crossentropy',
                      metrics=['accuracy'])
-    return nn_model
-def  history_creation(nn_model):
-     history = nn_model.fit(x_train, y_train, epochs=100, batch_size=32, validation_split=0.2)
-     return history
+    history = nn_model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.2, verbose =0)
 
-new_model = new_nn()
-history = history_creation(new_model)
-plot_loss(history)
-plot_accuracy(history)
+    return nn_model, history
+
+least_val_loss = float('inf')
+least_loss_model = None
+epochs =100
+for num_nodes in [16,32,64]:
+    for dropout_prob in [0, 0.2]:
+        for learning_rate in [0.01, 0.0005, 0.001]:
+            for batch_size in [32,64,128]:
+                print(f"{num_nodes} nodes, dropout {dropout_prob}, learning rate: {learning_rate}, batch size {batch_size} ")
+                model, history = train_model(x_train, y_train, num_nodes, dropout_prob, learning_rate, batch_size, epochs)
+                plot_history(history)
+                val_loss = model.evaluate(x_valid, y_valid)[0]
+                if val_loss < least_val_loss:
+                    least_val_loss = val_loss
+                    least_loss_model = model
+
+y_pred = least_loss_model.predict(x_test)
+y_pred = (y_pred > 0.5).astype(int).reshape(-1,)
